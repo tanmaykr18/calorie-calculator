@@ -7,12 +7,20 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   const [currentOffset, setCurrentOffset] = useState(0);
   const [velocity, setVelocity] = useState(0);
   const animationFrameRef = useRef(null);
+  const lastMoveTimeRef = useRef(0);
+  const lastMoveYRef = useRef(0);
+  const velocityHistoryRef = useRef([]);
+  const lastOffsetRef = useRef(0);
 
   // Calculate initial offset based on selectedIndex
   useEffect(() => {
-    const initialOffset = -selectedIndex * itemHeight;
-    setCurrentOffset(initialOffset);
-  }, [selectedIndex, itemHeight]);
+    if (!isDragging && !animationFrameRef.current) {
+      const initialOffset = -(selectedIndex * itemHeight) + (height / 2 - itemHeight / 2);
+      setCurrentOffset(initialOffset);
+      lastOffsetRef.current = initialOffset;
+      lastReportedIndexRef.current = selectedIndex;
+    }
+  }, [selectedIndex, itemHeight, height, isDragging]);
 
   // Get the index of the item closest to center
   const getSelectedIndex = (offset) => {
@@ -28,22 +36,48 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
     const targetOffset = -(selectedIdx * itemHeight) + (height / 2 - itemHeight / 2);
     
     setCurrentOffset(targetOffset);
-    if (selectedIdx !== selectedIndex) {
-      onChange({ 
-        value: data[selectedIdx].value, 
-        label: data[selectedIdx].label,
-        index: selectedIdx
-      });
-    }
+    lastOffsetRef.current = targetOffset;
+    
+    // Always call onChange to update parent component
+    onChange({ 
+      value: data[selectedIdx].value, 
+      label: data[selectedIdx].label,
+      index: selectedIdx
+    });
   };
+
+  // Update selected value during momentum scrolling (not during dragging)
+  const lastReportedIndexRef = useRef(selectedIndex);
+  
+  useEffect(() => {
+    if (!isDragging && animationFrameRef.current !== null) {
+      const selectedIdx = getSelectedIndex(currentOffset);
+      // Only update if index actually changed
+      if (selectedIdx !== lastReportedIndexRef.current && selectedIdx >= 0 && selectedIdx < data.length) {
+        lastReportedIndexRef.current = selectedIdx;
+        onChange({ 
+          value: data[selectedIdx].value, 
+          label: data[selectedIdx].label,
+          index: selectedIdx
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOffset, isDragging]);
 
   // Handle mouse/touch start
   const handleStart = (clientY) => {
     setIsDragging(true);
     setStartY(clientY);
     setVelocity(0);
+    lastMoveTimeRef.current = Date.now();
+    lastMoveYRef.current = clientY;
+    velocityHistoryRef.current = [];
+    lastOffsetRef.current = currentOffset;
+    
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
   };
 
@@ -51,8 +85,26 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   const handleMove = (clientY) => {
     if (!isDragging) return;
     
+    const now = Date.now();
+    const timeDelta = Math.max(1, now - lastMoveTimeRef.current);
+    const moveDelta = clientY - lastMoveYRef.current;
+    
+    // Calculate instant velocity (pixels per millisecond)
+    const instantVelocity = moveDelta / timeDelta;
+    
+    // Store velocity in history (keep last 5 samples for smoothing)
+    velocityHistoryRef.current.push(instantVelocity);
+    if (velocityHistoryRef.current.length > 5) {
+      velocityHistoryRef.current.shift();
+    }
+    
+    // Calculate smoothed velocity (average of recent velocities)
+    const avgVelocity = velocityHistoryRef.current.reduce((a, b) => a + b, 0) / velocityHistoryRef.current.length;
+    const smoothedVelocity = avgVelocity * 16; // Convert to pixels per frame (assuming 60fps)
+    
+    // Update offset based on movement
     const deltaY = clientY - startY;
-    const newOffset = currentOffset + deltaY;
+    const newOffset = lastOffsetRef.current + deltaY;
     
     // Calculate boundaries
     const minOffset = -(data.length - 1) * itemHeight + (height / 2 - itemHeight / 2);
@@ -61,53 +113,70 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
     // Apply with resistance at boundaries
     let boundedOffset = newOffset;
     if (newOffset > maxOffset) {
-      boundedOffset = maxOffset + (newOffset - maxOffset) * 0.3;
+      const excess = newOffset - maxOffset;
+      boundedOffset = maxOffset + excess * 0.2; // Stronger resistance
     } else if (newOffset < minOffset) {
-      boundedOffset = minOffset + (newOffset - minOffset) * 0.3;
+      const excess = newOffset - minOffset;
+      boundedOffset = minOffset + excess * 0.2; // Stronger resistance
     }
     
     setCurrentOffset(boundedOffset);
     setStartY(clientY);
+    setVelocity(smoothedVelocity);
     
-    // Calculate velocity for momentum
-    setVelocity(deltaY);
+    // Update refs for next frame
+    lastMoveTimeRef.current = now;
+    lastMoveYRef.current = clientY;
   };
 
   // Handle mouse/touch end
   const handleEnd = () => {
     setIsDragging(false);
+    lastOffsetRef.current = currentOffset;
     
-    // Apply momentum
-    if (Math.abs(velocity) > 2) {
+    // Apply momentum based on velocity
+    const absVelocity = Math.abs(velocity);
+    
+    if (absVelocity > 0.5) {
       let momentumOffset = currentOffset;
-      let momentum = velocity * 0.9;
+      // Scale momentum based on velocity (faster scroll = more momentum)
+      let momentum = velocity * 1.2; // Increased multiplier for more responsive feel
+      const friction = 0.92; // Slightly less friction for smoother deceleration
       
       const animate = () => {
         momentumOffset += momentum;
-        momentum *= 0.95;
+        momentum *= friction; // Exponential decay
         
         const minOffset = -(data.length - 1) * itemHeight + (height / 2 - itemHeight / 2);
         const maxOffset = height / 2 - itemHeight / 2;
         
+        // Bounce back with resistance at boundaries
         if (momentumOffset > maxOffset) {
-          momentumOffset = maxOffset;
-          momentum = 0;
+          const excess = momentumOffset - maxOffset;
+          momentumOffset = maxOffset + excess * 0.3;
+          momentum *= -0.5; // Reverse and dampen
         } else if (momentumOffset < minOffset) {
-          momentumOffset = minOffset;
-          momentum = 0;
+          const excess = momentumOffset - minOffset;
+          momentumOffset = minOffset + excess * 0.3;
+          momentum *= -0.5; // Reverse and dampen
         }
         
         setCurrentOffset(momentumOffset);
+        lastOffsetRef.current = momentumOffset;
         
-        if (Math.abs(momentum) > 0.1) {
+        // Continue animation if momentum is significant
+        if (Math.abs(momentum) > 0.2) {
           animationFrameRef.current = requestAnimationFrame(animate);
         } else {
+          // Snap to nearest when momentum is low
           snapToNearest(momentumOffset);
+          animationFrameRef.current = null;
         }
       };
       
       animationFrameRef.current = requestAnimationFrame(animate);
     } else {
+      // Low velocity - snap immediately
       snapToNearest(currentOffset);
     }
   };
@@ -150,15 +219,24 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   // Global mouse/touch listeners
   useEffect(() => {
     if (isDragging) {
-      const mouseMoveHandler = (e) => handleMove(e.clientY);
-      const mouseUpHandler = () => handleEnd();
+      const mouseMoveHandler = (e) => {
+        e.preventDefault();
+        handleMove(e.clientY);
+      };
+      const mouseUpHandler = () => {
+        handleEnd();
+      };
       const touchMoveHandler = (e) => {
         e.preventDefault();
-        handleMove(e.touches[0].clientY);
+        if (e.touches.length > 0) {
+          handleMove(e.touches[0].clientY);
+        }
       };
-      const touchEndHandler = () => handleEnd();
+      const touchEndHandler = () => {
+        handleEnd();
+      };
       
-      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mousemove', mouseMoveHandler, { passive: false });
       document.addEventListener('mouseup', mouseUpHandler);
       document.addEventListener('touchmove', touchMoveHandler, { passive: false });
       document.addEventListener('touchend', touchEndHandler);
@@ -170,7 +248,7 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
         document.removeEventListener('touchend', touchEndHandler);
       };
     }
-  }, [isDragging, currentOffset, startY, velocity]);
+  }, [isDragging]);
 
   // Calculate opacity and scale for items based on distance from center
   const getItemStyle = (index) => {
@@ -232,7 +310,8 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
         className="wheel-picker-items"
         style={{
           transform: `translateY(${currentOffset}px)`,
-          transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: isDragging || animationFrameRef.current ? 'none' : 'transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          willChange: 'transform',
         }}
       >
         {data.map((item, index) => (
