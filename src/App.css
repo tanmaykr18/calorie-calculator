@@ -1,0 +1,479 @@
+/* 
+ * Note: @tailwind warnings are expected and safe to ignore.
+ * These directives are processed by PostCSS/Tailwind, not standard CSS.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design System Color Tokens */
+:root {
+  /* Primary Colors - Blue Accent */
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #60a5fa;
+
+  /* Neutral Colors */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Accent Colors */
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-cyan: #06b6d4;
+
+  /* Backgrounds */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-dark: #0f172a;
+
+  /* Text Colors */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-light: #94a3b8;
+}
+
+/* Dark Mode */
+.dark {
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-light: #94a3b8;
+  --bg-primary: #1e293b;
+  --bg-secondary: #0f172a;
+}
+
+/* Smooth transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Custom Wheel Picker Styling */
+.wheel-picker-container {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.wheel-picker-wrapper {
+  position: relative;
+  border-radius: 12px;
+}
+
+.wheel-picker-item {
+  font-size: 1rem;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.dark .wheel-picker-item {
+  color: #f1f5f9;
+}
+
+.dark .wheel-picker-wrapper .absolute {
+  border-top-color: #60a5fa;
+  border-bottom-color: #60a5fa;
+  background: rgba(96, 165, 250, 0.15);
+}
+
+.wheel-picker-mask-top {
+  background: linear-gradient(to bottom, rgba(248, 250, 252, 0.95), transparent);
+}
+
+.wheel-picker-mask-bottom {
+  background: linear-gradient(to top, rgba(248, 250, 252, 0.95), transparent);
+}
+
+.dark .wheel-picker-mask-top {
+  background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), transparent);
+}
+
+.dark .wheel-picker-mask-bottom {
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent);
+}
+
+/* Modal Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.slide-in-from-bottom-4 {
+  animation: slide-in-from-bottom 0.3s ease-out;
+}
+
+/* Modal Mobile Optimizations */
+@media (max-width: 640px) {
+  .wheel-picker-container {
+    max-width: 100%;
+  }
+  
+  /* Ensure modal is full width on mobile */
+  [class*="max-w-sm"] {
+    max-width: 100% !important;
+    margin: 0 1rem;
+  }
+}
+
+/* Card Styling */
+.card {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 200ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.dark .card {
+  border-color: rgba(148, 163, 184, 0.15);
+}
+
+/* Custom slider styling */
+input[type="range"],
+.slider-custom {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e2e8f0; /* Fallback background - visible gray track */
+  cursor: pointer;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* Light mode - Slider track with gradient */
+input[type="range"]::-webkit-slider-track,
+.slider-custom::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+input[type="range"]::-moz-range-track,
+.slider-custom::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode track - More visible */
+.dark input[type="range"],
+.dark .slider-custom {
+  background: #334155; /* Dark fallback */
+}
+
+.dark input[type="range"]::-webkit-slider-track,
+.dark .slider-custom::-webkit-slider-track {
+  background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+.dark input[type="range"]::-moz-range-track,
+.dark .slider-custom::-moz-range-track {
+  background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+/* Slider thumb - Visible in light mode */
+input[type="range"]::-webkit-slider-thumb,
+.slider-custom::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.2);
+  cursor: pointer;
+  margin-top: -6px; /* Center the thumb on the track */
+  transition: all 150ms ease;
+  position: relative;
+  z-index: 1;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover,
+.slider-custom::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6), 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+input[type="range"]::-webkit-slider-thumb:active,
+.slider-custom::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.8);
+}
+
+input[type="range"]::-moz-range-thumb,
+.slider-custom::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.2);
+  cursor: pointer;
+  transition: all 150ms ease;
+  position: relative;
+  z-index: 1;
+}
+
+input[type="range"]::-moz-range-thumb:hover,
+.slider-custom::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6), 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+input[type="range"]::-moz-range-thumb:active,
+.slider-custom::-moz-range-thumb:active {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.8);
+}
+
+/* Dark mode slider thumb */
+.dark input[type="range"]::-webkit-slider-thumb,
+.dark .slider-custom::-webkit-slider-thumb {
+  background: #1e293b;
+  border-color: #60a5fa;
+  box-shadow: 0 2px 6px rgba(96, 165, 250, 0.5), 0 0 0 2px rgba(96, 165, 250, 0.3);
+}
+
+.dark input[type="range"]::-webkit-slider-thumb:hover,
+.dark .slider-custom::-webkit-slider-thumb:hover {
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.7), 0 0 0 4px rgba(96, 165, 250, 0.2);
+}
+
+.dark input[type="range"]::-moz-range-thumb,
+.dark .slider-custom::-moz-range-thumb {
+  background: #1e293b;
+  border-color: #60a5fa;
+  box-shadow: 0 2px 6px rgba(96, 165, 250, 0.5), 0 0 0 2px rgba(96, 165, 250, 0.3);
+}
+
+.dark input[type="range"]::-moz-range-thumb:hover,
+.dark .slider-custom::-moz-range-thumb:hover {
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.7), 0 0 0 4px rgba(96, 165, 250, 0.2);
+}
+
+/* Number input styling */
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Safe area for notched phones */
+@supports (padding: max(0px)) {
+  .pb-safe {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .px-safe {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+}
+
+/* Force slider visibility - Important overrides */
+.slider-custom {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: transparent !important; /* Transparent so gradient shows through */
+  position: relative;
+  z-index: 2;
+}
+
+/* Dark mode wrapper background */
+.dark .slider-custom {
+  background: transparent !important;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 640px) {
+  /* Reduce padding on mobile */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Header adjustments */
+  h1 {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  h2 {
+    font-size: 1.25rem !important;
+  }
+  
+  h3 {
+    font-size: 1rem !important;
+  }
+  
+  /* Card padding */
+  .card,
+  [class*="rounded-xl"] {
+    padding: 1rem !important;
+  }
+  
+  /* Input fields - easier to tap */
+  input[type="number"],
+  input[type="text"] {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+  
+  /* Buttons - larger touch targets */
+  button {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Slider adjustments */
+  input[type="range"],
+  .slider-custom {
+    height: 44px !important; /* Larger touch area */
+  }
+  
+  /* Grid adjustments for time inputs */
+  .grid-cols-2 {
+    gap: 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small devices */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Tighter spacing */
+  [class*="mb-6"],
+  [class*="mb-8"] {
+    margin-bottom: 1rem !important;
+  }
+  
+  [class*="p-6"] {
+    padding: 0.875rem !important;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 900px) and (orientation: landscape) {
+  /* Reduce vertical spacing in landscape */
+  [class*="py-8"] {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  
+  [class*="mb-6"],
+  [class*="mb-8"] {
+    margin-bottom: 1rem !important;
+  }
+}
+
+/* Tablet optimization */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .max-w-2xl {
+    max-width: 90%;
+  }
+}
+
+/* Button base styles */
+button {
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 150ms ease;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary button */
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Remove spinner from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
