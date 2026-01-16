@@ -11,14 +11,22 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   const lastMoveYRef = useRef(0);
   const velocityHistoryRef = useRef([]);
   const lastOffsetRef = useRef(0);
+  const lastReportedIndexRef = useRef(selectedIndex);
+  const isInitialMountRef = useRef(true);
+  const hasUserInteractedRef = useRef(false);
 
-  // Calculate initial offset based on selectedIndex
+  // Calculate initial offset based on selectedIndex (only on mount or when selectedIndex changes externally)
   useEffect(() => {
-    if (!isDragging && !animationFrameRef.current) {
+    // Only set initial offset if:
+    // 1. It's the first mount, OR
+    // 2. User hasn't interacted yet, OR  
+    // 3. Not currently dragging and no animation running
+    if ((isInitialMountRef.current || !hasUserInteractedRef.current) && !isDragging && !animationFrameRef.current) {
       const initialOffset = -(selectedIndex * itemHeight) + (height / 2 - itemHeight / 2);
       setCurrentOffset(initialOffset);
       lastOffsetRef.current = initialOffset;
       lastReportedIndexRef.current = selectedIndex;
+      isInitialMountRef.current = false;
     }
   }, [selectedIndex, itemHeight, height, isDragging]);
 
@@ -47,8 +55,6 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   };
 
   // Update selected value during momentum scrolling (not during dragging)
-  const lastReportedIndexRef = useRef(selectedIndex);
-  
   useEffect(() => {
     if (!isDragging && animationFrameRef.current !== null) {
       const selectedIdx = getSelectedIndex(currentOffset);
@@ -67,6 +73,7 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
 
   // Handle mouse/touch start
   const handleStart = (clientY) => {
+    hasUserInteractedRef.current = true;
     setIsDragging(true);
     setStartY(clientY);
     setVelocity(0);
@@ -201,17 +208,25 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
 
   // Touch events
   const handleTouchStart = (e) => {
-    handleStart(e.touches[0].clientY);
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length > 0) {
+      handleStart(e.touches[0].clientY);
+    }
   };
 
   const handleTouchMove = (e) => {
-    if (isDragging) {
+    if (isDragging && e.touches.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
       handleMove(e.touches[0].clientY);
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e) => {
     if (isDragging) {
+      e.preventDefault();
+      e.stopPropagation();
       handleEnd();
     }
   };
@@ -235,17 +250,22 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
       const touchEndHandler = () => {
         handleEnd();
       };
+      const touchCancelHandler = () => {
+        handleEnd();
+      };
       
       document.addEventListener('mousemove', mouseMoveHandler, { passive: false });
       document.addEventListener('mouseup', mouseUpHandler);
       document.addEventListener('touchmove', touchMoveHandler, { passive: false });
-      document.addEventListener('touchend', touchEndHandler);
+      document.addEventListener('touchend', touchEndHandler, { passive: false });
+      document.addEventListener('touchcancel', touchCancelHandler, { passive: false });
       
       return () => {
         document.removeEventListener('mousemove', mouseMoveHandler);
         document.removeEventListener('mouseup', mouseUpHandler);
         document.removeEventListener('touchmove', touchMoveHandler);
         document.removeEventListener('touchend', touchEndHandler);
+        document.removeEventListener('touchcancel', touchCancelHandler);
       };
     }
   }, [isDragging]);
@@ -277,6 +297,8 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Selection indicator */}
       <div
