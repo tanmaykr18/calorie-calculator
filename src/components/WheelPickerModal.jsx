@@ -64,17 +64,38 @@ export default function WheelPickerModal({
     return closestIndex;
   };
 
-  // Handle manual input
+  // Handle manual input - real-time scrolling
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleInputSubmit = () => {
-    const closestIndex = findClosestValue(inputValue);
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    
+    // If input is empty or just whitespace, don't update
+    if (!newValue.trim()) {
+      return;
+    }
+    
+    // Find closest value and scroll in real-time
+    const closestIndex = findClosestValue(newValue);
     if (closestIndex !== null && closestIndex >= 0) {
       setCurrentIndex(closestIndex);
       const closestValue = data[closestIndex].value;
+      
+      // Update the wheel picker immediately
+      onChange({
+        value: closestValue,
+        label: data[closestIndex].label,
+        index: closestIndex
+      });
+    }
+  };
+
+  const handleInputSubmit = () => {
+    // Finalize the value - snap to exact match if available
+    const closestIndex = findClosestValue(inputValue);
+    if (closestIndex !== null && closestIndex >= 0) {
+      const closestValue = data[closestIndex].value;
       setInputValue(String(closestValue));
+      setCurrentIndex(closestIndex);
       onChange({
         value: closestValue,
         label: data[closestIndex].label,
@@ -158,7 +179,7 @@ export default function WheelPickerModal({
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                {isEditing ? 'Type a value or scroll to select' : 'Scroll or tap to edit'}
+                {isEditing ? 'Type to scroll in real-time' : 'Scroll or tap to edit'}
               </p>
             </div>
           </div>
