@@ -21,35 +21,39 @@ export function useTreadmillCalc() {
     return 95;
   });
 
+  // Helper to create a set with unique ID
+  const createSet = (setData = {}) => ({
+    id: `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique ID
+    incline: setData.incline || 0,
+    speed: setData.speed || 5,
+    timeMinutes: setData.timeMinutes || 30,
+    timeSeconds: setData.timeSeconds || 0
+  });
+
   const [sets, setSets] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const data = JSON.parse(stored);
         // Migrate old format (time) to new format (timeMinutes, timeSeconds)
-        if (data.sets) {
+        if (data.sets && data.sets.length > 0) {
           return data.sets.map(set => {
-            if (set.time !== undefined && set.timeMinutes === undefined) {
-              return {
-                ...set,
-                timeMinutes: Math.floor(set.time),
-                timeSeconds: Math.round((set.time % 1) * 60)
-              };
-            }
-            return {
+            const migratedSet = {
+              id: set.id || `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Preserve or create ID
               incline: set.incline || 0,
               speed: set.speed || 5,
-              timeMinutes: set.timeMinutes || 30,
-              timeSeconds: set.timeSeconds || 0
+              timeMinutes: set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 30),
+              timeSeconds: set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0)
             };
+            return migratedSet;
           });
         }
-        return [{ incline: 0, speed: 5, timeMinutes: 30, timeSeconds: 0 }];
+        return [createSet()];
       } catch (e) {
-        return [{ incline: 0, speed: 5, timeMinutes: 30, timeSeconds: 0 }];
+        return [createSet()];
       }
     }
-    return [{ incline: 0, speed: 5, timeMinutes: 30, timeSeconds: 0 }];
+    return [createSet()];
   });
 
   const [results, setResults] = useState([]);
@@ -64,13 +68,27 @@ export function useTreadmillCalc() {
     // Use default weight of 95 if weight is empty or invalid
     const weightForCalc = (weight && !isNaN(weight) && weight >= 30 && weight <= 200) ? weight : 95;
     
+    // Safety check: ensure sets array is not empty and has valid data
+    if (!sets || sets.length === 0) {
+      setResults([]);
+      return;
+    }
+    
     const newResults = sets.map(set => {
+      // Ensure set has required properties with defaults
+      const safeSet = {
+        speed: set.speed || 5,
+        incline: set.incline || 0,
+        timeMinutes: set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 30),
+        timeSeconds: set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0)
+      };
+      
       // Convert minutes + seconds to total minutes (decimal)
-      const totalMinutes = (set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 30)) + 
-                          ((set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0)) / 60);
+      const totalMinutes = safeSet.timeMinutes + (safeSet.timeSeconds / 60);
+      
       return calculateTreadmillMetrics(
-        set.speed,
-        set.incline,
+        safeSet.speed,
+        safeSet.incline,
         totalMinutes,
         weightForCalc
       );
@@ -102,6 +120,12 @@ export function useTreadmillCalc() {
   // Set handlers
   const updateSet = useCallback((index, field, value) => {
     setSets(prev => {
+      // Safety check: ensure index is valid
+      if (index < 0 || index >= prev.length) {
+        console.warn(`Invalid set index: ${index}`);
+        return prev;
+      }
+      
       const newSets = [...prev];
       let validValue = Number(value);
       
@@ -123,14 +147,17 @@ export function useTreadmillCalc() {
           break;
       }
       
-      newSets[index] = { ...newSets[index], [field]: validValue };
+      // Ensure the set exists before updating
+      if (newSets[index]) {
+        newSets[index] = { ...newSets[index], [field]: validValue };
+      }
       return newSets;
     });
   }, []);
 
   const addSet = useCallback(() => {
     if (sets.length < 10) {
-      setSets(prev => [...prev, { incline: 0, speed: 5, timeMinutes: 30, timeSeconds: 0 }]);
+      setSets(prev => [...prev, createSet()]);
     }
   }, [sets.length]);
 
@@ -142,11 +169,13 @@ export function useTreadmillCalc() {
 
   const resetAll = useCallback(() => {
     setWeight(95);
-    setSets([{ incline: 0, speed: 5, timeMinutes: 30, timeSeconds: 0 }]);
+    setSets([createSet()]);
   }, []);
 
-  // Calculate total calories
-  const totalCalories = results.reduce((sum, result) => sum + result.calories, 0);
+  // Calculate total calories (with safety check)
+  const totalCalories = results && results.length > 0 
+    ? results.reduce((sum, result) => sum + (result?.calories || 0), 0)
+    : 0;
 
   return {
     weight,

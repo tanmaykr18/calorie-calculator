@@ -9,6 +9,7 @@ export default function ResultsList({ results, totalCalories, sets }) {
 
   // Format time from minutes and seconds
   const formatTime = (set) => {
+    if (!set) return '0min';
     const minutes = set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 0);
     const seconds = set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0);
     if (seconds > 0) {
@@ -17,9 +18,9 @@ export default function ResultsList({ results, totalCalories, sets }) {
     return `${minutes}min`;
   };
 
-  // Calculate averages and totals
-  const avgSpeed = sets.reduce((sum, set) => sum + set.speed, 0) / sets.length;
-  const avgIncline = sets.reduce((sum, set) => sum + Math.round(set.incline), 0) / sets.length;
+  // Calculate averages and totals (with safety check for empty sets)
+  const avgSpeed = sets.length > 0 ? sets.reduce((sum, set) => sum + set.speed, 0) / sets.length : 0;
+  const avgIncline = sets.length > 0 ? sets.reduce((sum, set) => sum + Math.round(set.incline), 0) / sets.length : 0;
   const totalTimeMinutes = sets.reduce((sum, set) => {
     const minutes = set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 0);
     const seconds = set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0);
@@ -28,6 +29,8 @@ export default function ResultsList({ results, totalCalories, sets }) {
 
   // Copy to clipboard function
   const copyToClipboard = async () => {
+    if (sets.length === 0 || results.length === 0) return;
+    
     let text = '';
     
     // Format each set
@@ -45,22 +48,13 @@ export default function ResultsList({ results, totalCalories, sets }) {
       text += `set${index + 1}:- speed ${speed}km/hr | ${incline}incline | ${timeStr} | ${calories} calories\n`;
     });
     
-    // Add totals with calculations shown
+    // Add totals with actual calculated values (same as shown in summary)
     const totalMins = Math.floor(totalTimeMinutes);
     const totalSecs = Math.round((totalTimeMinutes % 1) * 60);
-    const timeStr = totalSecs > 0 ? `${totalMins}min ${totalSecs}sec` : `${totalMins}mins`;
+    const timeStr = totalSecs > 0 ? `${totalMins}min ${totalSecs}sec` : `${totalMins}min`;
     
-    // Calculate formulas for averages
-    const speedValues = sets.map(s => s.speed.toFixed(1)).join('+');
-    const inclineValues = sets.map(s => Math.round(s.incline)).join('+');
-    const caloriesValues = results.map(r => r.calories.toFixed(1)).join('+');
-    const timeValues = sets.map((set) => {
-      const minutes = set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 0);
-      const seconds = set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0);
-      return seconds === 0 ? `${minutes}` : `${(minutes + seconds / 60).toFixed(1)}`;
-    }).join('+');
-    
-    text += `total:- avg speed ${speedValues}/${sets.length} | avg incline (${inclineValues})/${sets.length} | total time (${timeValues} mins) | total calories (${caloriesValues})calories`;
+    // Use the actual calculated values from the summary
+    text += `total:- avg speed ${avgSpeed.toFixed(1)}km/hr | avg incline ${avgIncline.toFixed(0)}incline | total time ${timeStr} | total calories ${totalCalories.toFixed(1)} calories`;
     
     try {
       await navigator.clipboard.writeText(text);

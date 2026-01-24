@@ -1,6 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 
 export default function WheelPicker({ data, selectedIndex, onChange, height = 200, itemHeight = 40 }) {
+  // Safety check: return null if no data
+  if (!data || data.length === 0) {
+    return null;
+  }
+
   const containerRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -11,7 +16,7 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   const lastMoveYRef = useRef(0);
   const velocityHistoryRef = useRef([]);
   const lastOffsetRef = useRef(0);
-  const lastReportedIndexRef = useRef(selectedIndex);
+  const lastReportedIndexRef = useRef(Math.max(0, Math.min(selectedIndex || 0, data.length - 1)));
   const isInitialMountRef = useRef(true);
   const hasUserInteractedRef = useRef(false);
 
@@ -22,13 +27,14 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
     // 2. User hasn't interacted yet, OR  
     // 3. Not currently dragging and no animation running
     if ((isInitialMountRef.current || !hasUserInteractedRef.current) && !isDragging && !animationFrameRef.current) {
-      const initialOffset = -(selectedIndex * itemHeight) + (height / 2 - itemHeight / 2);
+      const safeIndex = Math.max(0, Math.min(selectedIndex || 0, data.length - 1));
+      const initialOffset = -(safeIndex * itemHeight) + (height / 2 - itemHeight / 2);
       setCurrentOffset(initialOffset);
       lastOffsetRef.current = initialOffset;
-      lastReportedIndexRef.current = selectedIndex;
+      lastReportedIndexRef.current = safeIndex;
       isInitialMountRef.current = false;
     }
-  }, [selectedIndex, itemHeight, height, isDragging]);
+  }, [selectedIndex, itemHeight, height, isDragging, data.length]);
 
   // Get the index of the item closest to center
   const getSelectedIndex = (offset) => {
@@ -41,6 +47,9 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   // Snap to nearest item
   const snapToNearest = (offset) => {
     const selectedIdx = getSelectedIndex(offset);
+    if (selectedIdx < 0 || selectedIdx >= data.length || !data[selectedIdx]) {
+      return;
+    }
     const targetOffset = -(selectedIdx * itemHeight) + (height / 2 - itemHeight / 2);
     
     setCurrentOffset(targetOffset);
@@ -58,8 +67,8 @@ export default function WheelPicker({ data, selectedIndex, onChange, height = 20
   useEffect(() => {
     if (!isDragging && animationFrameRef.current !== null) {
       const selectedIdx = getSelectedIndex(currentOffset);
-      // Only update if index actually changed
-      if (selectedIdx !== lastReportedIndexRef.current && selectedIdx >= 0 && selectedIdx < data.length) {
+      // Only update if index actually changed and is valid
+      if (selectedIdx !== lastReportedIndexRef.current && selectedIdx >= 0 && selectedIdx < data.length && data[selectedIdx]) {
         lastReportedIndexRef.current = selectedIdx;
         onChange({ 
           value: data[selectedIdx].value, 

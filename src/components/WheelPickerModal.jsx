@@ -15,15 +15,17 @@ export default function WheelPickerModal({
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(selectedIndex);
-      const currentValue = data[selectedIndex]?.value || data[selectedIndex]?.label || '';
+    if (isOpen && data && data.length > 0) {
+      // Ensure selectedIndex is within bounds
+      const safeIndex = Math.max(0, Math.min(selectedIndex, data.length - 1));
+      setCurrentIndex(safeIndex);
+      const currentValue = data[safeIndex]?.value || data[safeIndex]?.label || '';
       setInputValue(String(currentValue));
       setIsEditing(false);
     }
   }, [isOpen, selectedIndex, data]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !data || data.length === 0) return null;
 
   const handleChange = (changeData) => {
     if (changeData.index !== undefined) {

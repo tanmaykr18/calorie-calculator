@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import WheelPickerModal from './WheelPickerModal';
 
 export default function SetInput({ setNumber, set, onUpdate, onRemove, canRemove }) {
@@ -6,6 +6,16 @@ export default function SetInput({ setNumber, set, onUpdate, onRemove, canRemove
   const [speedModalOpen, setSpeedModalOpen] = useState(false);
   const [minutesModalOpen, setMinutesModalOpen] = useState(false);
   const [secondsModalOpen, setSecondsModalOpen] = useState(false);
+
+  // Close all modals if set becomes invalid (e.g., after deletion)
+  useEffect(() => {
+    if (!set) {
+      setInclineModalOpen(false);
+      setSpeedModalOpen(false);
+      setMinutesModalOpen(false);
+      setSecondsModalOpen(false);
+    }
+  }, [set]);
 
   // Generate incline options: 0-25% (step 1)
   const inclineOptions = useMemo(() => {
@@ -26,8 +36,13 @@ export default function SetInput({ setNumber, set, onUpdate, onRemove, canRemove
     return options;
   }, []);
 
-  const currentIncline = Math.round(set.incline);
-  const currentSpeed = parseFloat(set.speed.toFixed(1));
+  // Safety check: ensure set exists
+  if (!set) {
+    return null;
+  }
+
+  const currentIncline = Math.round(set.incline || 0);
+  const currentSpeed = parseFloat((set.speed || 5).toFixed(1));
 
   // Generate minutes options: 0-120 (step 1)
   const minutesOptions = useMemo(() => {
@@ -50,10 +65,18 @@ export default function SetInput({ setNumber, set, onUpdate, onRemove, canRemove
   const currentMinutes = set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 30);
   const currentSeconds = set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0);
 
-  const inclineSelectedIndex = inclineOptions.findIndex(opt => opt.value === currentIncline);
-  const speedSelectedIndex = speedOptions.findIndex(opt => opt.value === currentSpeed);
-  const minutesSelectedIndex = minutesOptions.findIndex(opt => opt.value === currentMinutes);
-  const secondsSelectedIndex = secondsOptions.findIndex(opt => opt.value === currentSeconds);
+  const inclineSelectedIndex = inclineOptions.findIndex(opt => opt.value === currentIncline) >= 0 
+    ? inclineOptions.findIndex(opt => opt.value === currentIncline) 
+    : 0;
+  const speedSelectedIndex = speedOptions.findIndex(opt => opt.value === currentSpeed) >= 0 
+    ? speedOptions.findIndex(opt => opt.value === currentSpeed) 
+    : 0;
+  const minutesSelectedIndex = minutesOptions.findIndex(opt => opt.value === currentMinutes) >= 0 
+    ? minutesOptions.findIndex(opt => opt.value === currentMinutes) 
+    : 30;
+  const secondsSelectedIndex = secondsOptions.findIndex(opt => opt.value === currentSeconds) >= 0 
+    ? secondsOptions.findIndex(opt => opt.value === currentSeconds) 
+    : 0;
   return (
     <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6 mb-4 sm:mb-6">
       {/* Header */}

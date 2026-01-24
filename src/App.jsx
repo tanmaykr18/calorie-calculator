@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react"
-import { ThemeProvider } from "@mui/material/styles"
-import CssBaseline from "@mui/material/CssBaseline"
 import WeightInput from "./components/WeightInput"
 import SetInput from "./components/SetInput"
 import ResultsList from "./components/ResultsList"
 import { useTreadmillCalc } from "./hooks/useTreadmillCalc"
-import { getTheme } from "./theme/theme"
 import "./App.css"
 
 function App() {
@@ -26,12 +23,8 @@ function App() {
     localStorage.setItem("darkMode", JSON.stringify(darkMode))
   }, [darkMode])
 
-  const muiTheme = getTheme(darkMode);
-
   return (
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 pb-safe pt-safe px-safe">
         {/* Header */}
         <header className="mb-6 sm:mb-8">
@@ -59,7 +52,7 @@ function App() {
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Workout Sets</h2>
           {sets.map((set, index) => (
             <SetInput
-              key={index}
+              key={set.id || `set-${index}`}
               setNumber={index + 1}
               set={set}
               onUpdate={(field, value) => updateSet(index, field, value)}
@@ -107,7 +100,6 @@ function App() {
         </footer>
         </div>
       </div>
-    </ThemeProvider>
   )
 }
 
