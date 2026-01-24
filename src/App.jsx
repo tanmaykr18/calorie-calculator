@@ -80,7 +80,7 @@ function App() {
         </div>
 
         {/* Results */}
-        <ResultsList results={results} totalCalories={totalCalories} />
+        <ResultsList results={results} totalCalories={totalCalories} sets={sets} />
 
         {/* Reset Button - Updated styling */}
         <button
