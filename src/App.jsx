@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import WeightInput from "./components/WeightInput"
 import SetInput from "./components/SetInput"
 import ResultsList from "./components/ResultsList"
+import AICalorieCalculator from "./components/AICalorieCalculator"
 import { useTreadmillCalc } from "./hooks/useTreadmillCalc"
 import "./App.css"
 
@@ -99,6 +100,9 @@ function App() {
           </p>
         </footer>
         </div>
+
+      {/* AI Calorie Calculator */}
+      <AICalorieCalculator />
       </div>
   )
 }
