@@ -45,7 +45,9 @@ export default function ResultsList({ results, totalCalories, sets }) {
       // Format time: show as whole minutes if no seconds, otherwise show decimal
       const timeStr = seconds === 0 ? `${minutes}mins` : `${totalMinutes.toFixed(1)}min`;
       
-      text += `set${index + 1}:- speed ${speed}km/hr | ${incline}incline | ${timeStr} | ${calories} calories\n`;
+      const calPerMin = results[index]?.caloriesPerMinute?.toFixed(1) || (parseFloat(calories) / totalMinutes).toFixed(1);
+      
+      text += `set${index + 1}:- speed ${speed}km/hr | ${incline}incline | ${timeStr} | ${calories} calories | ${calPerMin} cal/min\n`;
     });
     
     // Add totals with actual calculated values (same as shown in summary)
@@ -126,12 +128,14 @@ export default function ResultsList({ results, totalCalories, sets }) {
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Distance</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{result.distance.toFixed(2)} km</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Cal/Min</span>
+                  <span className="font-bold text-red-600 dark:text-red-400">
+                    {result.caloriesPerMinute?.toFixed(1) || (result.calories / ((sets[index]?.timeMinutes || 0) + (sets[index]?.timeSeconds || 0) / 60)).toFixed(1)} /min
+                  </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">METs</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{result.mets.toFixed(1)}</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Distance</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">{result.distance.toFixed(2)} km</span>
                 </div>
               </div>
             </div>
@@ -167,8 +171,7 @@ export default function ResultsList({ results, totalCalories, sets }) {
       {/* Accuracy disclaimer */}
       <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
         <p className="text-xs text-amber-800 dark:text-amber-200 text-center">
-          <span className="font-semibold">Note:</span> ±5-10% estimate using ACSM metabolic equations. Individual
-          metabolism varies.
+          <span className="font-semibold">Note:</span> Calories shown are NET (active only, BMR excluded). ±5-10% estimate using ACSM metabolic equations. Individual metabolism varies.
         </p>
       </div>
     </div>

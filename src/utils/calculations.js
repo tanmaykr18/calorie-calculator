@@ -9,7 +9,7 @@
  * @param {number} inclinePercent - Incline in % (0-25)
  * @param {number} timeMinutes - Time in minutes (1-120)
  * @param {number} bodyWeightKg - Body weight in kg (30-200)
- * @returns {object} { vo2, mets, calories, distance }
+ * @returns {object} { vo2, mets, calories (NET - excluding BMR), distance }
  */
 export function calculateTreadmillMetrics(speedKmh, inclinePercent, timeMinutes, bodyWeightKg) {
   // Step 1: Convert units
@@ -23,16 +23,22 @@ export function calculateTreadmillMetrics(speedKmh, inclinePercent, timeMinutes,
   // Step 3: Calculate METs
   const mets = vo2 / 3.5;
 
-  // Step 4: Calculate calories burned
-  const calories = mets * bodyWeightKg * timeHours;
+  // Step 4: Calculate NET calories burned (excluding BMR)
+  // Subtract 1 MET (resting metabolism) to get active calories only
+  const netMets = mets - 1;
+  const calories = netMets * bodyWeightKg * timeHours;
 
   // Step 5: Calculate distance (km)
   const distance = speedKmh * timeHours;
+
+  // Calculate calories per minute
+  const caloriesPerMinute = timeMinutes > 0 ? calories / timeMinutes : 0;
 
   return {
     vo2: parseFloat(vo2.toFixed(2)),
     mets: parseFloat(mets.toFixed(2)),
     calories: parseFloat(calories.toFixed(1)),
+    caloriesPerMinute: parseFloat(caloriesPerMinute.toFixed(1)),
     distance: parseFloat(distance.toFixed(2))
   };
 }
