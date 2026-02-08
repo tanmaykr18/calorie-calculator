@@ -12,7 +12,7 @@ function App() {
     return stored ? JSON.parse(stored) : false
   })
 
-  const { weight, sets, results, totalCalories, updateWeight, updateSet, addSet, removeSet, resetAll } =
+  const { weight, sets, results, totalCalories, totalCaloriesGross, updateWeight, updateSet, addSet, removeSet, resetAll } =
     useTreadmillCalc()
 
   useEffect(() => {

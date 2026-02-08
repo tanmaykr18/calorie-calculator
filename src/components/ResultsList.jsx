@@ -56,9 +56,10 @@ export default function ResultsList({ results, totalCalories, totalCaloriesGross
     const totalSecs = Math.round((totalTimeMinutes % 1) * 60);
     const timeStr = totalSecs > 0 ? `${totalMins}min ${totalSecs}sec` : `${totalMins}min`;
     const avgActiveCalMin = totalTimeMinutes > 0 ? (totalCalories / totalTimeMinutes).toFixed(1) : '0.0';
-    const avgGrossCalMin = totalTimeMinutes > 0 ? (totalCaloriesGross / totalTimeMinutes).toFixed(1) : '0.0';
+    const grossTotal = totalCaloriesGross ?? 0;
+    const avgGrossCalMin = totalTimeMinutes > 0 ? (grossTotal / totalTimeMinutes).toFixed(1) : '0.0';
     
-    text += `total:- avg speed ${avgSpeed.toFixed(1)}km/hr | avg incline ${avgIncline.toFixed(0)}incline | total time ${timeStr} | Active: ${totalCalories.toFixed(1)} kcal (${avgActiveCalMin}/min) | Gross: ${totalCaloriesGross.toFixed(1)} kcal (${avgGrossCalMin}/min)`;
+    text += `total:- avg speed ${avgSpeed.toFixed(1)}km/hr | avg incline ${avgIncline.toFixed(0)}incline | total time ${timeStr} | Active: ${totalCalories.toFixed(1)} kcal (${avgActiveCalMin}/min) | Gross: ${grossTotal.toFixed(1)} kcal (${avgGrossCalMin}/min)`;
     
     try {
       await navigator.clipboard.writeText(text);
