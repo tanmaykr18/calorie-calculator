@@ -3,7 +3,9 @@ import WeightInput from "./components/WeightInput"
 import SetInput from "./components/SetInput"
 import ResultsList from "./components/ResultsList"
 import AICalorieCalculator from "./components/AICalorieCalculator"
+import WeightDeficitLog from "./components/WeightDeficitLog"
 import { useTreadmillCalc } from "./hooks/useTreadmillCalc"
+import { useWeightDeficitLog } from "./hooks/useWeightDeficitLog"
 import "./App.css"
 
 function App() {
@@ -12,8 +14,11 @@ function App() {
     return stored ? JSON.parse(stored) : false
   })
 
+  const [activeTab, setActiveTab] = useState('calculations') // 'calculations' | 'workout-book'
+
   const { weight, sets, results, totalCalories, totalCaloriesGross, updateWeight, updateSet, addSet, removeSet, resetAll } =
     useTreadmillCalc()
+  const weightDeficitLog = useWeightDeficitLog()
 
   useEffect(() => {
     if (darkMode) {
@@ -45,7 +50,27 @@ function App() {
           </p>
         </header>
 
-        {/* Weight Input */}
+        {/* Tabs */}
+        <div className="flex rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 mb-6 bg-slate-100 dark:bg-slate-800">
+          <button
+            type="button"
+            onClick={() => setActiveTab('calculations')}
+            className={`flex-1 py-3 sm:py-4 text-sm sm:text-base font-semibold transition-colors ${activeTab === 'calculations' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+          >
+            🧮 Calculations
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('workout-book')}
+            className={`flex-1 py-3 sm:py-4 text-sm sm:text-base font-semibold transition-colors ${activeTab === 'workout-book' ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+          >
+            📉 Workout book
+          </button>
+        </div>
+
+        {/* Tab: Calculations */}
+        {activeTab === 'calculations' && (
+          <>
         <WeightInput weight={weight} onWeightChange={updateWeight} />
 
         {/* Sets Section */}
@@ -73,10 +98,8 @@ function App() {
           </button>
         </div>
 
-        {/* Results */}
         <ResultsList results={results} totalCalories={totalCalories} totalCaloriesGross={totalCaloriesGross} sets={sets} />
 
-        {/* Reset Button - Updated styling */}
         <button
           onClick={resetAll}
           className="w-full py-3 sm:py-4 text-base sm:text-lg bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-colors mb-4"
@@ -84,6 +107,13 @@ function App() {
         >
           🔄 Reset All
         </button>
+          </>
+        )}
+
+        {/* Tab: Workout book */}
+        {activeTab === 'workout-book' && (
+          <WeightDeficitLog {...weightDeficitLog} />
+        )}
 
         {/* Footer */}
         <footer className="text-center text-xs text-slate-500 dark:text-slate-400 mt-8">

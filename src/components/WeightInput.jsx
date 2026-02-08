@@ -13,10 +13,10 @@ export default function WeightInput({ weight, onWeightChange }) {
     return options;
   }, []);
 
-  // Get current weight value or default to 95
+  // Get current weight value or default to 85
   const currentWeight = weight && !isNaN(weight) && weight >= 30 && weight <= 200 
     ? parseFloat(Number(weight).toFixed(1)) 
-    : 95;
+    : 85;
   
   // Find the closest matching index
   const getSelectedIndex = () => {

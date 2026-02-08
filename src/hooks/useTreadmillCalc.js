@@ -8,26 +8,28 @@ const STORAGE_KEY = 'treadmill-calc-data';
  */
 export function useTreadmillCalc() {
   // Initialize state from localStorage or defaults
+  const DEFAULT_WEIGHT = 85;
+
   const [weight, setWeight] = useState(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const data = JSON.parse(stored);
-        return data.weight || 95;
+        return data.weight ?? DEFAULT_WEIGHT;
       } catch (e) {
-        return 95;
+        return DEFAULT_WEIGHT;
       }
     }
-    return 95;
+    return DEFAULT_WEIGHT;
   });
 
-  // Helper to create a set with unique ID
+  // Helper to create a set with unique ID (reset defaults: 3.5 km/h, 10% incline, 90 min)
   const createSet = (setData = {}) => ({
     id: `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique ID
-    incline: setData.incline || 0,
-    speed: setData.speed || 5,
-    timeMinutes: setData.timeMinutes || 30,
-    timeSeconds: setData.timeSeconds || 0
+    incline: setData.incline ?? 10,
+    speed: setData.speed ?? 3.5,
+    timeMinutes: setData.timeMinutes ?? 90,
+    timeSeconds: setData.timeSeconds ?? 0
   });
 
   const [sets, setSets] = useState(() => {
@@ -40,9 +42,9 @@ export function useTreadmillCalc() {
           return data.sets.map(set => {
             const migratedSet = {
               id: set.id || `set-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Preserve or create ID
-              incline: set.incline || 0,
-              speed: set.speed || 5,
-              timeMinutes: set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 30),
+              incline: set.incline ?? 10,
+              speed: set.speed ?? 3.5,
+              timeMinutes: set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 90),
               timeSeconds: set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0)
             };
             return migratedSet;
@@ -65,8 +67,8 @@ export function useTreadmillCalc() {
 
   // Calculate results whenever inputs change
   useEffect(() => {
-    // Use default weight of 95 if weight is empty or invalid
-    const weightForCalc = (weight && !isNaN(weight) && weight >= 30 && weight <= 200) ? weight : 95;
+    // Use default weight if weight is empty or invalid
+    const weightForCalc = (weight && !isNaN(weight) && weight >= 30 && weight <= 200) ? weight : DEFAULT_WEIGHT;
     
     // Safety check: ensure sets array is not empty and has valid data
     if (!sets || sets.length === 0) {
@@ -77,9 +79,9 @@ export function useTreadmillCalc() {
     const newResults = sets.map(set => {
       // Ensure set has required properties with defaults
       const safeSet = {
-        speed: set.speed || 5,
-        incline: set.incline || 0,
-        timeMinutes: set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 30),
+        speed: set.speed ?? 3.5,
+        incline: set.incline ?? 10,
+        timeMinutes: set.timeMinutes !== undefined ? set.timeMinutes : (set.time ? Math.floor(set.time) : 90),
         timeSeconds: set.timeSeconds !== undefined ? set.timeSeconds : (set.time ? Math.round((set.time % 1) * 60) : 0)
       };
       
@@ -168,7 +170,7 @@ export function useTreadmillCalc() {
   }, [sets.length]);
 
   const resetAll = useCallback(() => {
-    setWeight(95);
+    setWeight(DEFAULT_WEIGHT);
     setSets([createSet()]);
   }, []);
 
