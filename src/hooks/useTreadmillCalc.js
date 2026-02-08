@@ -172,9 +172,12 @@ export function useTreadmillCalc() {
     setSets([createSet()]);
   }, []);
 
-  // Calculate total calories (with safety check)
+  // Calculate total calories - active and gross (with safety check)
   const totalCalories = results && results.length > 0 
     ? results.reduce((sum, result) => sum + (result?.calories || 0), 0)
+    : 0;
+  const totalCaloriesGross = results && results.length > 0 
+    ? results.reduce((sum, result) => sum + (result?.caloriesGross || 0), 0)
     : 0;
 
   return {
@@ -182,6 +185,7 @@ export function useTreadmillCalc() {
     sets,
     results,
     totalCalories,
+    totalCaloriesGross,
     updateWeight,
     updateSet,
     addSet,

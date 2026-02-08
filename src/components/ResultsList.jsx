@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function ResultsList({ results, totalCalories, sets }) {
+export default function ResultsList({ results, totalCalories, totalCaloriesGross, sets }) {
   const [copied, setCopied] = useState(false);
 
   if (results.length === 0) {
@@ -40,23 +40,25 @@ export default function ResultsList({ results, totalCalories, sets }) {
       const totalMinutes = minutes + (seconds / 60);
       const incline = Math.round(set.incline);
       const speed = set.speed.toFixed(1);
-      const calories = results[index]?.calories.toFixed(1) || '0.0';
-      
+      const calories = results[index]?.calories?.toFixed(1) || '0.0';
       // Format time: show as whole minutes if no seconds, otherwise show decimal
       const timeStr = seconds === 0 ? `${minutes}mins` : `${totalMinutes.toFixed(1)}min`;
       
       const calPerMin = results[index]?.caloriesPerMinute?.toFixed(1) || (parseFloat(calories) / totalMinutes).toFixed(1);
+      const caloriesGrossVal = results[index]?.caloriesGross?.toFixed(1) || '0.0';
+      const calPerMinGross = results[index]?.caloriesPerMinuteGross?.toFixed(1) || '0.0';
       
-      text += `set${index + 1}:- speed ${speed}km/hr | ${incline}incline | ${timeStr} | ${calories} calories | ${calPerMin} cal/min\n`;
+      text += `set${index + 1}:- speed ${speed}km/hr | ${incline}incline | ${timeStr} | Active: ${calories} kcal (${calPerMin}/min) | Gross: ${caloriesGrossVal} kcal (${calPerMinGross}/min)\n`;
     });
     
     // Add totals with actual calculated values (same as shown in summary)
     const totalMins = Math.floor(totalTimeMinutes);
     const totalSecs = Math.round((totalTimeMinutes % 1) * 60);
     const timeStr = totalSecs > 0 ? `${totalMins}min ${totalSecs}sec` : `${totalMins}min`;
+    const avgActiveCalMin = totalTimeMinutes > 0 ? (totalCalories / totalTimeMinutes).toFixed(1) : '0.0';
+    const avgGrossCalMin = totalTimeMinutes > 0 ? (totalCaloriesGross / totalTimeMinutes).toFixed(1) : '0.0';
     
-    // Use the actual calculated values from the summary
-    text += `total:- avg speed ${avgSpeed.toFixed(1)}km/hr | avg incline ${avgIncline.toFixed(0)}incline | total time ${timeStr} | total calories ${totalCalories.toFixed(1)} calories`;
+    text += `total:- avg speed ${avgSpeed.toFixed(1)}km/hr | avg incline ${avgIncline.toFixed(0)}incline | total time ${timeStr} | Active: ${totalCalories.toFixed(1)} kcal (${avgActiveCalMin}/min) | Gross: ${totalCaloriesGross.toFixed(1)} kcal (${avgGrossCalMin}/min)`;
     
     try {
       await navigator.clipboard.writeText(text);
@@ -122,15 +124,15 @@ export default function ResultsList({ results, totalCalories, sets }) {
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Calories</span>
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Active (kcal)</span>
                   <span className="font-bold text-orange-600 dark:text-orange-400">
-                    {result.calories.toFixed(1)} kcal
+                    {result.calories.toFixed(1)} ({result.caloriesPerMinute?.toFixed(1) ?? '0'}/min)
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Cal/Min</span>
-                  <span className="font-bold text-red-600 dark:text-red-400">
-                    {result.caloriesPerMinute?.toFixed(1) || (result.calories / ((sets[index]?.timeMinutes || 0) + (sets[index]?.timeSeconds || 0) / 60)).toFixed(1)} /min
+                  <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Gross (kcal)</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">
+                    {result.caloriesGross?.toFixed(1) ?? result.calories.toFixed(1)} ({result.caloriesPerMinuteGross?.toFixed(1) ?? '0'}/min)
                   </span>
                 </div>
                 <div className="flex flex-col">
@@ -146,7 +148,7 @@ export default function ResultsList({ results, totalCalories, sets }) {
       {/* Total Summary - Featured */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 rounded-xl p-4 sm:p-6 text-center shadow-lg mb-4">
         <p className="text-blue-100 text-xs sm:text-sm font-semibold mb-3 sm:mb-4 uppercase tracking-wide">Total Summary</p>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-sm sm:text-base">
           <div>
             <p className="text-blue-100 text-xs font-medium mb-1">Avg Speed</p>
             <p className="text-white text-lg sm:text-xl font-bold">{avgSpeed.toFixed(1)} km/h</p>
@@ -162,8 +164,14 @@ export default function ResultsList({ results, totalCalories, sets }) {
             </p>
           </div>
           <div>
-            <p className="text-blue-100 text-xs font-medium mb-1">Total Calories</p>
+            <p className="text-blue-100 text-xs font-medium mb-1">Total Active</p>
             <p className="text-white text-lg sm:text-xl font-bold">{totalCalories.toFixed(1)} kcal</p>
+            <p className="text-blue-200 text-xs">{(totalTimeMinutes > 0 ? totalCalories / totalTimeMinutes : 0).toFixed(1)}/min</p>
+          </div>
+          <div>
+            <p className="text-blue-100 text-xs font-medium mb-1">Total Gross</p>
+            <p className="text-white text-lg sm:text-xl font-bold">{(totalCaloriesGross ?? 0).toFixed(1)} kcal</p>
+            <p className="text-blue-200 text-xs">{(totalTimeMinutes > 0 && totalCaloriesGross ? totalCaloriesGross / totalTimeMinutes : 0).toFixed(1)}/min</p>
           </div>
         </div>
       </div>
@@ -171,7 +179,7 @@ export default function ResultsList({ results, totalCalories, sets }) {
       {/* Accuracy disclaimer */}
       <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
         <p className="text-xs text-amber-800 dark:text-amber-200 text-center">
-          <span className="font-semibold">Note:</span> Calories shown are NET (active only, BMR excluded). ±5-10% estimate using ACSM metabolic equations. Individual metabolism varies.
+          <span className="font-semibold">Note:</span> Active = exercise-only (BMR excluded). Gross = total including BMR. ±5-10% estimate using ACSM metabolic equations.
         </p>
       </div>
     </div>

@@ -74,7 +74,7 @@ function App() {
         </div>
 
         {/* Results */}
-        <ResultsList results={results} totalCalories={totalCalories} sets={sets} />
+        <ResultsList results={results} totalCalories={totalCalories} totalCaloriesGross={totalCaloriesGross} sets={sets} />
 
         {/* Reset Button - Updated styling */}
         <button
